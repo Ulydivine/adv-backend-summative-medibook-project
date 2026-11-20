@@ -1,0 +1,33 @@
+{
+  "name": "adv-backend-summative-medibook-project",
+  "version": "1.0.0",
+  "description": "MediBook clinic appointment booking API",
+  "main": "server.js",
+  "scripts": {
+    "test": "jest --runInBand",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ulydivine/adv-backend-summative-medibook-project.git"
+  },
+  "keywords": [],
+  "author": "Ulydivine",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ulydivine/adv-backend-summative-medibook-project/issues"
+  },
+  "homepage": "https://github.com/Ulydivine/adv-backend-summative-medibook-project#readme",
+  "dependencies": {
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "mysql2": "^3.24.6",
+    "redis": "^6.3.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "nodemon": "^3.1.14"
+  }
+}
