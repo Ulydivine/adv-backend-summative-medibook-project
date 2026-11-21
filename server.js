@@ -28,6 +28,8 @@ app.get('/', (req, res) => {
     });
 });
 
+// Handle errors from all routes
+app.use(errorMiddleware);
 // Start the server and connect to MySQL and Redis
 const startServer = async () => {
     try {
