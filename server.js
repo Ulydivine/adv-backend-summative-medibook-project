@@ -4,10 +4,22 @@ require('dotenv').config();
 const express = require('express');
 const pool = require('./src/config/database');
 const redisClient = require('./src/config/redis');
+const errorMiddleware = require('./src/middleware/errorMiddleware');
 
 const app = express();
 
 app.use(express.json());
+
+const patientRoutes = require('./src/routes/patientRoutes');
+app.use('/patients', patientRoutes);
+
+const doctorRoutes = require('./src/routes/doctorRoutes');
+app.use('/doctors', doctorRoutes);
+
+const appointmentRoutes = require('./src/routes/appointmentRoutes');
+app.use('/appointments', appointmentRoutes);
+
+app.use(errorMiddleware);
 
 // Basic route to check if the API is running
 app.get('/', (req, res) => {
