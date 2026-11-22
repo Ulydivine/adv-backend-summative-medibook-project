@@ -41,7 +41,25 @@ const createAppointment = async (appointment) => {
             [appointment.doctor_id]
         );
 
-        // Get the number of booked appointments for that day
+       // Check if this exact appointment time is already booked
+        const [existingAppointments] = await connection.execute(
+            `SELECT appointment_id
+             FROM appointments
+             WHERE doctor_id = ?
+             AND appointment_datetime = ?
+             AND status = 'booked'`,
+            [
+                appointment.doctor_id,
+                appointment.appointment_datetime
+            ]
+        );
+
+        if (existingAppointments.length > 0) {
+            const error = new Error('This appointment slot is already booked');
+            error.status = 409;
+            throw error;
+        }
+     // Get the number of booked appointments for that day
         const [rows] = await connection.execute(
             `SELECT COUNT(*) AS total
              FROM appointments
