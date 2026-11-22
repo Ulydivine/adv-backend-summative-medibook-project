@@ -22,9 +22,9 @@ const errorMiddleware = (error, req, res, next) => {
         });
     }
 
-    res.status(500).json({
-        message: 'Internal server error'
-    });
+  res.status(error.status || 500).json({
+    message: error.status ? error.message : 'Internal server error'
+});
 };
 
 module.exports = errorMiddleware;
