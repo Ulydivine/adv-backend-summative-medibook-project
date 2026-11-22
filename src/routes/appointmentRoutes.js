@@ -8,5 +8,6 @@ const appointmentController = require('../controllers/appointmentController');
 router.get('/', appointmentController.getAllAppointments);
 router.get('/:id', appointmentController.getAppointmentById);
 router.post('/', appointmentController.createAppointment);
+router.patch('/:id/cancel', appointmentController.cancelAppointment);
 
 module.exports = router;
