@@ -11,15 +11,14 @@ const app = express();
 app.use(express.json());
 
 const patientRoutes = require('./src/routes/patientRoutes');
-app.use('/patients', patientRoutes);
-
 const doctorRoutes = require('./src/routes/doctorRoutes');
-app.use('/doctors', doctorRoutes);
-
+const appointmentRoutes = require('./src/routes/appointmentRoutes');
 const feedbackRoutes = require('./src/routes/feedbackRoutes');
-app.use('/feedback', feedbackRoutes);
 
-app.use(errorMiddleware);
+app.use('/patients', patientRoutes);
+app.use('/doctors', doctorRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/feedback', feedbackRoutes);
 
 // Basic route to check if the API is running
 app.get('/', (req, res) => {
@@ -30,6 +29,7 @@ app.get('/', (req, res) => {
 
 // Handle errors from all routes
 app.use(errorMiddleware);
+
 // Start the server and connect to MySQL and Redis
 const startServer = async () => {
     try {
@@ -50,3 +50,4 @@ const startServer = async () => {
 };
 
 startServer();
+
