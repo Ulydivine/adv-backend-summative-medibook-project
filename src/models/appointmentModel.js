@@ -1,6 +1,7 @@
 
 
 const pool = require('../config/database');
+const calculateRefund = require('../utils/refundCalculator');
 
 // Get all appointments
 const getAllAppointments = async () => {
@@ -136,19 +137,16 @@ const cancelAppointment = async (id) => {
             throw error;
         }
 
-        // Calculate the refund percentage
-        const secondsUntil = Number(appointment.seconds_until);
-        let refundPercentage = 0;
+       // Calculate the refund
+const secondsUntil = Number(appointment.seconds_until);
 
-        if (secondsUntil > 48 * 60 * 60) {
-            refundPercentage = 100;
-        } else if (secondsUntil >= 24 * 60 * 60) {
-            refundPercentage = 50;
-        }
+const refund = calculateRefund(
+    appointment.amount_paid,
+    secondsUntil
+);
 
-        const refundAmount = Number(
-            (Number(appointment.amount_paid) * refundPercentage / 100).toFixed(2)
-        );
+const refundPercentage = refund.refund_percentage;
+const refundAmount = refund.refund_amount;
 
         // Update the appointment
         await connection.execute(
