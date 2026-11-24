@@ -5,7 +5,7 @@ const errorMiddleware = (error, req, res, next) => {
     // Duplicate appointment or other duplicate data
     if (error.code === 'ER_DUP_ENTRY') {
         return res.status(409).json({
-            message: 'This appointment slot is already booked'
+            message: 'A record with these details already exists'
         });
     }
 
