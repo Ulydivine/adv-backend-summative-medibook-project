@@ -6,6 +6,7 @@ const waitlistModel = require('../models/waitlistModel');
 const doctorModel = require('../models/doctorModel');
 const redisClient = require('../config/redis');
 const logAuditEvent = require('../utils/auditLogger');
+const validateAppointmentDateTime = require('../utils/appointmentValidation');
 
 // Get all appointments
 const getAllAppointments = async (req, res, next) => {
@@ -50,15 +51,14 @@ const createAppointment = async (req, res, next) => {
             });
         }
 
-        // Check that the appointment date and time are valid
-        const appointmentDate = new Date(appointment_datetime);
+        // Get the doctor's consultation fee
+      const validationError = validateAppointmentDateTime(appointment_datetime);
 
-        if (Number.isNaN(appointmentDate.getTime())) {
-            return res.status(400).json({
-                message: 'Invalid appointment date and time'
-            });
-        }
-
+if (validationError) {
+    return res.status(validationError.status).json({
+        message: validationError.message
+    });
+}
         if (appointmentDate <= new Date()) {
             return res.status(422).json({
                 message: 'Appointment must be in the future'
