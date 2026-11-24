@@ -1,5 +1,11 @@
 
+
+
 const appointmentModel = require('../models/appointmentModel');
+const waitlistModel = require('../models/waitlistModel');
+const doctorModel = require('../models/doctorModel');
+const redisClient = require('../config/redis');
+const logAuditEvent = require('../utils/auditLogger');
 
 // Get all appointments
 const getAllAppointments = async (req, res, next) => {
@@ -81,7 +87,7 @@ const createAppointment = async (req, res, next) => {
         }
 
         // Get the doctor's consultation fee
-        const doctor = await require('../models/doctorModel').getDoctorById(doctor_id);
+        const doctor = await doctorModel.getDoctorById(doctor_id);
 
         if (!doctor) {
             return res.status(404).json({
@@ -90,27 +96,96 @@ const createAppointment = async (req, res, next) => {
         }
 
         // Create the appointment
-        const appointmentId = await appointmentModel.createAppointment({
-            patient_id,
-            doctor_id,
-            appointment_datetime,
-            amount_paid: doctor.consultation_fee
-        });
+        try {
+            const appointmentId = await appointmentModel.createAppointment({
+                patient_id,
+                doctor_id,
+                appointment_datetime,
+                amount_paid: doctor.consultation_fee
+            });
 
-        res.status(201).json({
-            message: 'Appointment booked successfully',
-            appointment_id: appointmentId
-        });
+            logAuditEvent({
+    action: 'appointment_booked',
+    appointment_id: appointmentId,
+    patient_id,
+    doctor_id,
+    appointment_datetime
+});
+
+            // Send a notification job to Redis
+            await redisClient.lPush(
+                'notification:jobs',
+                JSON.stringify({
+                    appointment_id: appointmentId,
+                    patient_id,
+                    doctor_id,
+                    appointment_datetime
+                })
+            );
+
+            return res.status(201).json({
+                message: 'Appointment booked successfully',
+                appointment_id: appointmentId
+            });
+
+        } catch (error) {
+            // Add the patient to the waitlist if the slot or day is full
+            if (
+                error.status === 409 &&
+                (
+                    error.message === 'This appointment slot is already booked' ||
+                    error.message === 'Doctor has reached the daily appointment limit'
+                )
+            ) {
+                await waitlistModel.addToWaitlist(
+                    doctor_id,
+                    appointment_datetime,
+                    {
+                        patient_id,
+                        amount_paid: doctor.consultation_fee,
+                        waitlist_reason: error.message === 'Doctor has reached the daily appointment limit'
+                            ? 'daily_limit'
+                            : 'slot_unavailable'
+                    }
+                );
+
+                const waitlistCount = await waitlistModel.getWaitlistCount(
+                    doctor_id,
+                    appointment_datetime
+                );
+
+                return res.status(202).json({
+                    message: 'Appointment unavailable. You have been added to the waitlist.',
+                    waitlist_position: waitlistCount
+                });
+            }
+
+            throw error;
+        }
+
     } catch (error) {
         next(error);
     }
 };
 
-
- // Cancel an appointment
+// Cancel an appointment
 const cancelAppointment = async (req, res, next) => {
     try {
         const result = await appointmentModel.cancelAppointment(req.params.id);
+
+        logAuditEvent({
+    action: 'appointment_cancelled',
+    ...result
+});
+
+        // Send a job to Redis for the waitlist worker
+        await redisClient.lPush(
+            'waitlist:promotion:jobs',
+            JSON.stringify({
+                doctor_id: result.doctor_id,
+                appointment_datetime: result.appointment_datetime
+            })
+        );
 
         res.status(200).json({
             message: 'Appointment cancelled successfully',
