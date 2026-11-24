@@ -1,4 +1,5 @@
 
+
 const doctorModel = require('../models/doctorModel');
 
 // Get all doctors
@@ -106,10 +107,50 @@ const deleteDoctor = async (req, res, next) => {
     }
 };
 
+// Get statistics for one doctor
+const getDoctorStats = async (req, res, next) => {
+    try {
+        const stats = await doctorModel.getDoctorStats(req.params.id);
+
+        if (!stats) {
+            return res.status(404).json({
+                message: 'Doctor not found'
+            });
+        }
+
+        res.status(200).json(stats);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get report for all doctors
+const getDoctorsReport = async (req, res, next) => {
+    try {
+        const report = await doctorModel.getDoctorsReport();
+        res.status(200).json(report);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get busy days report
+const getBusyDaysReport = async (req, res, next) => {
+    try {
+        const report = await doctorModel.getBusyDaysReport();
+        res.status(200).json(report);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getAllDoctors,
     getDoctorById,
     createDoctor,
     updateDoctor,
-    deleteDoctor
+    deleteDoctor,
+    getDoctorStats,
+    getDoctorsReport,
+    getBusyDaysReport
 };
