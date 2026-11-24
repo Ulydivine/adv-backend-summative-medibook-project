@@ -114,6 +114,7 @@ const cancelAppointment = async (id) => {
         // Find and lock the appointment
         const [rows] = await connection.execute(
             `SELECT *,
+                DATE_FORMAT(appointment_datetime, '%Y-%m-%d %H:%i:%s') AS appointment_datetime_text,
                 TIMESTAMPDIFF(SECOND, NOW(), appointment_datetime) AS seconds_until
              FROM appointments
              WHERE appointment_id = ?
@@ -164,10 +165,13 @@ const cancelAppointment = async (id) => {
 
         return {
             appointment_id: Number(id),
+            doctor_id: appointment.doctor_id,
+            appointment_datetime: appointment.appointment_datetime_text,
             status: 'cancelled',
             refund_percentage: refundPercentage,
             refund_amount: refundAmount
         };
+
     } catch (error) {
         await connection.rollback();
         throw error;
