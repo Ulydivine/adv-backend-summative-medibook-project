@@ -16,8 +16,8 @@ app.use('/patients', patientRoutes);
 const doctorRoutes = require('./src/routes/doctorRoutes');
 app.use('/doctors', doctorRoutes);
 
-const appointmentRoutes = require('./src/routes/appointmentRoutes');
-app.use('/appointments', appointmentRoutes);
+const feedbackRoutes = require('./src/routes/feedbackRoutes');
+app.use('/feedback', feedbackRoutes);
 
 app.use(errorMiddleware);
 
