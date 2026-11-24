@@ -1,6 +1,5 @@
 
 
-
 const appointmentModel = require('../models/appointmentModel');
 const waitlistModel = require('../models/waitlistModel');
 const doctorModel = require('../models/doctorModel');
@@ -51,38 +50,12 @@ const createAppointment = async (req, res, next) => {
             });
         }
 
-        // Get the doctor's consultation fee
-      const validationError = validateAppointmentDateTime(appointment_datetime);
+        // Validate appointment date and time
+        const validationError = validateAppointmentDateTime(appointment_datetime);
 
-if (validationError) {
-    return res.status(validationError.status).json({
-        message: validationError.message
-    });
-}
-        if (appointmentDate <= new Date()) {
-            return res.status(422).json({
-                message: 'Appointment must be in the future'
-            });
-        }
-
-        const time = appointment_datetime.split(' ')[1];
-
-        if (!time) {
-            return res.status(400).json({
-                message: 'Use YYYY-MM-DD HH:MM:SS for appointment date and time'
-            });
-        }
-
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-
-        if (
-            hours < 9 ||
-            hours >= 17 ||
-            ![0, 30].includes(minutes) ||
-            seconds !== 0
-        ) {
-            return res.status(422).json({
-                message: 'Appointments must be between 09:00 and 17:00 on 30-minute slots'
+        if (validationError) {
+            return res.status(validationError.status).json({
+                message: validationError.message
             });
         }
 
@@ -105,12 +78,12 @@ if (validationError) {
             });
 
             logAuditEvent({
-    action: 'appointment_booked',
-    appointment_id: appointmentId,
-    patient_id,
-    doctor_id,
-    appointment_datetime
-});
+                action: 'appointment_booked',
+                appointment_id: appointmentId,
+                patient_id,
+                doctor_id,
+                appointment_datetime
+            });
 
             // Send a notification job to Redis
             await redisClient.lPush(
@@ -174,9 +147,9 @@ const cancelAppointment = async (req, res, next) => {
         const result = await appointmentModel.cancelAppointment(req.params.id);
 
         logAuditEvent({
-    action: 'appointment_cancelled',
-    ...result
-});
+            action: 'appointment_cancelled',
+            ...result
+        });
 
         // Send a job to Redis for the waitlist worker
         await redisClient.lPush(
